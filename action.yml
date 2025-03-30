@@ -35,9 +35,10 @@ runs:
     - name: Run deploy script
       run: |
         python "${{ github.action_path }}/scripts/deploy_files_to_telegram.py" \
-          --bot-token ${{ inputs.bot_token }} \
-          --chat-id ${{ inputs.chat_id }} \
-          --directory ${{ inputs.directory }} \
-          --message ${{ inputs.message }} \
-          --add-git-info ${{ inputs.add_git_info }}
+          --bot-token "${{ inputs.bot_token }}" \
+          --chat-id "${{ inputs.chat_id }}" \
+          --directory "${{ inputs.directory }}" \
+          --patterns "${{ inputs.patterns }}" \
+          --message "${{ inputs.message }}" \
+          --add-git-info "${{ inputs.add_git_info }}"
       shell: bash
