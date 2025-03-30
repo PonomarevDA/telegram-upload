@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # to get tags
 
       - name: Create test files
         run: |
@@ -20,7 +22,6 @@ jobs:
         with:
           bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
-          directory: test_dir
-          patterns: "*.bin"
+          files: test_dir/*.bin
           message: "Test from self-test workflow"
           add_git_info: "true"

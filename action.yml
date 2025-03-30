@@ -10,13 +10,9 @@ inputs:
   chat_id:
     description: "Telegram Chat ID"
     required: true
-  directory:
-    description: "Directory with files to uplaod"
+  files:
+    description: "One or more file paths or glob patterns (e.g. \"build/*.bin\" \"my_firmware.elf\")"
     required: true
-  patterns:
-    description: "One or more glob patterns to find files (e.g. \"*.bin\" \"*.elf\")."
-    required: false
-    default: "*.bin"
   message:
     description: "Message to the last file"
     required: true
@@ -37,8 +33,7 @@ runs:
         python "${{ github.action_path }}/scripts/deploy_files_to_telegram.py" \
           --bot-token "${{ inputs.bot_token }}" \
           --chat-id "${{ inputs.chat_id }}" \
-          --directory "${{ inputs.directory }}" \
-          --patterns "${{ inputs.patterns }}" \
+          --files "${{ inputs.files }}" \
           --message "${{ inputs.message }}" \
           --add-git-info "${{ inputs.add_git_info }}"
       shell: bash

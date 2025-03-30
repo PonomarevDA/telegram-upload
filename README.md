@@ -2,49 +2,36 @@
 
 A GitHub Action to upload one or more files (e.g., `.bin`, `.elf`, logs, etc.) to a Telegram chat via a bot token. This helps streamline the distribution of build artifacts or release files to Telegram.
 
-## Features
-
-- Uploads multiple files at once using Telegram’s `sendMediaGroup`.
-- Support for custom [glob patterns](https://en.wikipedia.org/wiki/Glob_(programming)) (e.g., `"*.bin" "*.elf"`).
-- Appends optional Git commit info for auditing (`add_git_info`).
-- Simple to integrate into any GitHub workflow.
-
 ## Usage
 
-1. **Add a Step in Your Workflow**
+```yaml
+- uses: PonomarevDA/telegram-upload@v1.0.0
+  with:
+    # Your Telegram bot token.
+    # Create a Telegram bot via @BotFather,
+    # Go to your repository’s Settings > Secrets > Actions > New repository secret
+    # Add TELEGRAM_BOT_TOKEN with the value of the token.
+    bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
-   ```yaml
-   - name: Deploy to Telegram
-     uses: PonomarevDA/telegram-upload@v1.0.0
-     with:
-       bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-       chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
-       directory: build/release
-       patterns: "*.bin *.elf"
-       message: "Deployment from GitHub Actions"
-       add_git_info: "true"
-    ```
+    # The ID of the Telegram chat/channel/group where files are sent.
+    # Use @get_id_bot, https://api.telegram.org/bot<token>/getUpdates to find it.
+    chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
 
-**Where to Get These Inputs**
+    # One or more file paths or glob patterns (e.g. "build/*.bin" "my_firmware.elf")"
+    files: build/*.bin
 
-- `bot_token`: Create a Telegram bot via @BotFather and copy the token.
-- `chat_id`: The numeric chat/channel/group ID where you want to send files. You can use @get_id_bot or similar to find it.
+    # The caption text for the final file.
+    # It’s appended as a caption to the last file in the media group.
+    message: "Deployment from GitHub Actions"
 
-**Secrets Configuration**
-
-- Go to your repository’s Settings > Secrets and variables > Actions and add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` with appropriate values.
-- Reference them in your workflow using ${{ secrets.`TELEGRAM_BOT_TOKEN` }} / ${{ secrets.`TELEGRAM_CHAT_ID` }}.
-
-## Inputs
-
-| Input | Required | Default | Description |
-|-|-|-|-|
-| bot_token | Yes | – | Your Telegram bot token. |
-| chat_id | Yes | –	| The ID of the Telegram chat/channel/group where files are sent. |
-| directory | Yes | – | The directory containing files to upload. |
-| patterns | No | *.bin | One or more glob patterns (space-separated) to match files (e.g. "*.bin *.elf").
-| message | Yes | – | The caption text for the final file. (It’s appended as a caption to the last file in the media group.) |
-| add_git_info | No | false | If "true", appends Git commit info (commit SHA, author, date) to the message. |
+    # If "true", automatically appends Git commit info to the message. Like this:
+    # VCS commit: 75fdf50
+    # Commit date: 2025-03-30
+    # Author: author <email>
+    # Branch: main
+    # Latest Tag: v1.0.0
+    add_git_info: "true"
+```
 
 ## Notes & Limitations
 

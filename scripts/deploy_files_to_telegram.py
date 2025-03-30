@@ -48,22 +48,30 @@ def get_git_info() -> str:
 
     return git_info
 
-def find_files(directory: str, patterns: List[str]) -> List[Path]:
-    dir_path = Path(directory)
-    if not dir_path.is_dir():
-        raise ValueError(f"{directory} is not a valid directory.")
+def resolve_files(file_inputs: List[str]) -> List[Path]:
+    """
+    Given a list of file paths or glob patterns, return a sorted, unique list of valid Paths.
+    Example: ["build/*.bin", "myapp.elf", "docs/readme.md"]
+    """
+    all_matched = []
 
-    matched_files = []
-    for pattern in patterns:
-        matched_files.extend(dir_path.glob(pattern))
+    for pattern in file_inputs:
+        # Use glob from the current working directory
+        matched = list(Path().glob(pattern))
+        if not matched:
+            # If the glob found nothing, check if 'pattern' is a literal file path
+            possible_path = Path(pattern)
+            if possible_path.exists():
+                matched = [possible_path]
 
-    # remove duplicates if patterns overlap
-    all_files = sorted(set(matched_files))
+        all_matched.extend(matched)
 
-    if not all_files:
-        raise FileNotFoundError(f"No files found matching patterns: {patterns}")
+    # Remove duplicates, sort
+    unique_files = sorted(set(all_matched))
+    if not unique_files:
+        raise FileNotFoundError(f"No files found for patterns: {file_inputs}")
 
-    return all_files
+    return unique_files
 
 def send_media_group(telegram_bot_token: str,
                      telegram_chat_id: str,
@@ -134,26 +142,28 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--bot-token', required=True, help='Telegram bot token')
     parser.add_argument('--chat-id', required=True, help='Telegram chat ID')
-    parser.add_argument('--directory', required=True, help='Directory containing files to upload')
-    parser.add_argument('--patterns',
-                        nargs='*',  # Zero or more arguments
-                        required=False,
-                        default=['*.bin'],
-                        help='One or more glob patterns to find files (e.g. "*.bin" "*.elf")'
-    )
+    parser.add_argument('--files', nargs='+', required=True,
+                        help='One or more file paths or glob patterns (e.g. "build/*.bin" "my_firmware.elf")')
+
     parser.add_argument('--message', required=True)
     parser.add_argument('--add-git-info', required=False, default=False,
                         help='If true, append info about the latest git commit.')
 
     args = parser.parse_args()
 
-    files = find_files(directory=args.directory, patterns=args.patterns)
+    # Resolve the user-provided file inputs
+    try:
+        resolved_files = resolve_files(args.files)
+    except (ValueError, FileNotFoundError) as e:
+        logger.error(str(e))
+        sys.exit(1)
 
+    # Build final message
     message = f"{args.message}\n"
     if args.add_git_info.strip().lower() in ["true", "1", "yes", "on"]:
         message += get_git_info()
 
-    send_media_group(args.bot_token, args.chat_id, files, message)
+    send_media_group(args.bot_token, args.chat_id, resolved_files, message)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
