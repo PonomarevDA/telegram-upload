@@ -1,6 +1,6 @@
 # action.yml
 name: "Telegram Upload"
-description: "Uploads binaries (or any files) to a Telegram chat"
+description: "Uploads files to a Telegram chat"
 author: "PonomarevDA"
 
 inputs:
@@ -13,10 +13,14 @@ inputs:
   directory:
     description: "Directory with files to uplaod"
     required: true
-  message: # todo
+  patterns:
+    description: "One or more glob patterns to find files (e.g. \"*.bin\" \"*.elf\")."
+    required: false
+    default: ".bin"
+  message:
     description: "Message to the last file"
     required: true
-  add_git_info: # todo
+  add_git_info:
     description: "If true, then append info about the latest git commit and tag in the git repo."
     required: false
     default: "false"
