@@ -2,14 +2,13 @@
 """
 Send a group of files to a Telegram chat using a bot token.
 """
-import os
 import sys
 import logging
 import argparse
 import subprocess
-import requests
 from pathlib import Path
 from typing import List
+import requests
 
 
 logger = logging.getLogger("deploy_files_to_telegram.py")
@@ -63,11 +62,11 @@ def send_media_group(telegram_bot_token: str, telegram_chat_id: str, files: List
 
     if len(files) == 0:
         logger.error("Nothing to send")
-        return
+        sys.exit(1)
 
     if len(files) > 10:
         logger.error("Too many files to send")
-        return
+        sys.exit(1)
 
     media_json_array = [None] * len(files)
 
@@ -86,26 +85,26 @@ def send_media_group(telegram_bot_token: str, telegram_chat_id: str, files: List
         files_payload[f"file{idx + 1}"] = open(files[idx], 'rb')
 
     url = f"https://api.telegram.org/bot{telegram_bot_token}/sendMediaGroup"
-    response = requests.post(url, data=media_payload, files=files_payload)
+    response = requests.post(url, data=media_payload, files=files_payload, timeout=5)
 
     for file in files_payload.values():
         file.close()
 
     try:
-        data = response.json()
+        response.json()
     except ValueError:
         logger.error(
             "Telegram API returned non-JSON or invalid JSON (status %s): %s",
             response.status_code, response.text
         )
-        return
+        sys.exit(1)
 
     if response.status_code != 200:
         logger.error(
             "Telegram API call failed (HTTP %d). Response text: %s",
             response.status_code, response.text
         )
-        return
+        sys.exit(1)
 
     logger.info("Files have been send.")
 
@@ -127,11 +126,9 @@ def main():
     args = parser.parse_args()
 
     files = find_files(directory=args.directory, patterns=args.patterns)
-    if files is None:
-        sys.exit(1)
 
     message = f"{args.message}\n"
-    if args.add_git_info == "true" or args.add_git_info == "True":
+    if args.add_git_info.strip().lower() in ["true", "1", "yes", "on"]:
         message += get_git_info()
 
     send_media_group(args.bot_token, args.chat_id, files, message)

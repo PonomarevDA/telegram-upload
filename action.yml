@@ -16,7 +16,7 @@ inputs:
   patterns:
     description: "One or more glob patterns to find files (e.g. \"*.bin\" \"*.elf\")."
     required: false
-    default: ".bin"
+    default: "*.bin"
   message:
     description: "Message to the last file"
     required: true
