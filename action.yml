@@ -10,12 +10,16 @@ inputs:
   chat_id:
     description: "Telegram Chat ID"
     required: true
-  files: # todo
-    description: "Files to uplaod"
-    required: not
+  directory:
+    description: "Directory with files to uplaod"
+    required: true
   message: # todo
     description: "Message to the last file"
-    required: not
+    required: true
+  add_git_info: # todo
+    description: "If true, then append info about the latest git commit and tag in the git repo."
+    required: false
+    default: "false"
 
 runs:
   using: "composite"
@@ -26,7 +30,10 @@ runs:
 
     - name: Run deploy script
       run: |
-        python scripts/deploy_release_to_telegram.py \
+        python scripts/deploy_files_to_telegram.py \
           --bot-token ${{ inputs.bot_token }} \
-          --chat-id ${{ inputs.chat_id }}
+          --chat-id ${{ inputs.chat_id }} \
+          --directory ${{ inputs.directory }} \
+          --message ${{ inputs.message }} \
+          --add-git-info ${{ inputs.add_git_info }}
       shell: bash
