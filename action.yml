@@ -1,0 +1,32 @@
+# action.yml
+name: "Telegram Upload"
+description: "Uploads binaries (or any files) to a Telegram chat"
+author: "PonomarevDA"
+
+inputs:
+  bot_token:
+    description: "Telegram Bot Token"
+    required: true
+  chat_id:
+    description: "Telegram Chat ID"
+    required: true
+  files: # todo
+    description: "Files to uplaod"
+    required: not
+  message: # todo
+    description: "Message to the last file"
+    required: not
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install dependencies
+      run: pip install requests
+      shell: bash
+
+    - name: Run deploy script
+      run: |
+        python scripts/deploy_release_to_telegram.py \
+          --bot-token ${{ inputs.bot_token }} \
+          --chat-id ${{ inputs.chat_id }}
+      shell: bash
