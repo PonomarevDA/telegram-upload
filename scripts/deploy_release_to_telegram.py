@@ -3,6 +3,7 @@
 Deploy release binaries to telegram
 """
 import os
+import sys
 import logging
 import argparse
 import subprocess
@@ -20,8 +21,8 @@ def get_git_info():
 
 def find_files(dir) -> Optional[list]:
     files = sorted([f for f in os.listdir(dir) if f.endswith('.bin')])
-    if len(files) < 5:
-        print("Error: Need at least 5 .bin files to send.")
+    if len(files) == 0:
+        print("Error: Need at least 1 .bin files to send.")
         return
 
     files = [os.path.join('build/release', file) for file in files]
@@ -37,29 +38,37 @@ def create_text_message() -> str:
         f"Author: {committer_name} <{committer_email}>"
     )
 
-def send_media_group(telegram_bot_token, telegram_chat_id, files, caption):
-    media_json_array = [
-        {"type": "document", "media": "attach://file1"},
-        {"type": "document", "media": "attach://file2"},
-        {"type": "document", "media": "attach://file3"},
-        {"type": "document", "media": "attach://file4"},
-        {"type": "document", "media": "attach://file5", "caption": caption},
-    ]
+def send_media_group(telegram_bot_token: str, telegram_chat_id: str, files: list, caption: str) -> None:
+    """
+    Send a single message to a given Telegram Chat with a given API token
+    containing multiple files with a capture to the last one.
+    """
+    assert isinstance(telegram_bot_token, str)
+    assert isinstance(telegram_chat_id, str)
+    assert isinstance(files, list)
+    assert isinstance(caption, str)
+
+    if len(files) == 0:
+        return # Nothing to send
+
+    media_json_array = [None] * len(files)
+
+    for idx in range(0, len(files) - 1):
+        media_json_array[idx] = {"type": "document", "media": f"attach://file{idx + 1}"}
+
+    media_json_array[len(files) - 1] = {"type": "document", "media": f"attach://file{len(files)}", "caption": caption}
 
     media_payload = {
         'chat_id': telegram_chat_id,
         'media': str(media_json_array).replace("'", '"')
     }
 
-    files_payload = {
-        'file1': open(files[0], 'rb'),
-        'file2': open(files[1], 'rb'),
-        'file3': open(files[2], 'rb'),
-        'file4': open(files[3], 'rb'),
-        'file5': open(files[4], 'rb'),
-    }
+    files_payload = {}
+    for idx in range(len(files)):
+        files_payload[f"file{idx + 1}"] = open(files[idx], 'rb')
 
-    response = requests.post(f'https://api.telegram.org/bot{telegram_bot_token}/sendMediaGroup', data=media_payload, files=files_payload)
+    url = f"https://api.telegram.org/bot{telegram_bot_token}/sendMediaGroup"
+    response = requests.post(url, data=media_payload, files=files_payload)
 
     for file in files_payload.values():
         file.close()
@@ -75,7 +84,7 @@ def main():
 
     files = find_files(dir=args.input_dir)
     if files is None:
-        os.exit(1)
+        sys.exit(1)
 
     text_message = create_text_message()
 
