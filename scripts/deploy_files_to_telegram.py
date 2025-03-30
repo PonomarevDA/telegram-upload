@@ -17,15 +17,30 @@ def get_git_info() -> str:
     """
     Return a string summarizing the current Git commit.
     """
+
+    def run_git_command(args):
+        """Helper to run a git command and return stripped string output, or None on failure."""
+        return subprocess.check_output(args).decode('utf-8').strip()
+
+
     try:
-        commit_sha = subprocess.check_output(['git', 'rev-parse', '--short=8', 'HEAD']).decode('utf-8').strip()
-        commit_date = subprocess.check_output(['git', 'log', '-1', '--format=%cd', '--date=short']).decode('utf-8').strip()
-        committer_name = subprocess.check_output(['git', 'log', '-1', '--format=%an']).decode('utf-8').strip()
-        committer_email = subprocess.check_output(['git', 'log', '-1', '--format=%ae']).decode('utf-8').strip()
+        commit_sha = run_git_command(['git', 'rev-parse', '--short=8', 'HEAD'])
+        commit_date = run_git_command(['git', 'log', '-1', '--format=%cd', '--date=short'])
+        committer_name = run_git_command(['git', 'log', '-1', '--format=%an'])
+        committer_email = run_git_command(['git', 'log', '-1', '--format=%ae'])
+        branch_name = run_git_command(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+
+        try:
+            latest_tag = run_git_command(['git', 'describe', '--tags', '--abbrev=0'])
+        except subprocess.CalledProcessError:
+            latest_tag = "not tagged"
+
         git_info = (
             f"VCS commit: {commit_sha}\n"
             f"Commit date: {commit_date}\n"
-            f"Author: {committer_name} <{committer_email}>"
+            f"Author: {committer_name} <{committer_email}>\n"
+            f"Branch: {branch_name}\n"
+            f"Latest Tag: {latest_tag}\n"
         )
     except subprocess.CalledProcessError:
         git_info = "Could not retrieve Git commit info. Are you in a Git repo?"
@@ -50,7 +65,10 @@ def find_files(directory: str, patterns: List[str]) -> List[Path]:
 
     return all_files
 
-def send_media_group(telegram_bot_token: str, telegram_chat_id: str, files: List[Path], caption: str) -> None:
+def send_media_group(telegram_bot_token: str,
+                     telegram_chat_id: str,
+                     files: List[Path],
+                     caption: str) -> None:
     """
     Send a single message to a given Telegram Chat with a given API token
     containing multiple files with a capture to the last one.
@@ -73,7 +91,11 @@ def send_media_group(telegram_bot_token: str, telegram_chat_id: str, files: List
     for idx in range(0, len(files) - 1):
         media_json_array[idx] = {"type": "document", "media": f"attach://file{idx + 1}"}
 
-    media_json_array[len(files) - 1] = {"type": "document", "media": f"attach://file{len(files)}", "caption": caption}
+    media_json_array[len(files) - 1] = {
+        "type": "document",
+        "media": f"attach://file{len(files)}",
+        "caption": caption
+    }
 
     media_payload = {
         'chat_id': telegram_chat_id,
