@@ -5,7 +5,7 @@ A GitHub Action to upload one or more files (e.g., `.bin`, `.elf`, logs, etc.) t
 ## Usage
 
 ```yaml
-- uses: PonomarevDA/telegram-upload@v1.0.0
+- uses: PonomarevDA/telegram-upload@v1.0.1
   with:
     # Your Telegram bot token.
     # Create a Telegram bot via @BotFather,
@@ -18,7 +18,7 @@ A GitHub Action to upload one or more files (e.g., `.bin`, `.elf`, logs, etc.) t
     chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
 
     # One or more file paths or glob patterns (e.g. "build/*.bin" "my_firmware.elf")"
-    files: build/*.bin
+    files: build/release/*.bin
 
     # The caption text for the final file.
     # It’s appended as a caption to the last file in the media group.
