@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import List
 import requests
 
+READ_TIMEOUT = 20
 
 logger = logging.getLogger("deploy_files_to_telegram.py")
 
@@ -115,7 +116,7 @@ def send_media_group(telegram_bot_token: str,
         files_payload[f"file{idx + 1}"] = open(files[idx], 'rb')
 
     url = f"https://api.telegram.org/bot{telegram_bot_token}/sendMediaGroup"
-    response = requests.post(url, data=media_payload, files=files_payload, timeout=5)
+    response = requests.post(url, data=media_payload, files=files_payload, timeout=READ_TIMEOUT)
 
     for file in files_payload.values():
         file.close()
