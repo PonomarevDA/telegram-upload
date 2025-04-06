@@ -2,6 +2,7 @@
 """
 Send a group of files to a Telegram chat using a bot token.
 """
+import os
 import sys
 import logging
 import argparse
@@ -49,15 +50,25 @@ def get_git_info() -> str:
 
     return git_info
 
-def resolve_files(file_inputs: List[str]) -> List[Path]:
+def resolve_files(patterns: List[str]) -> List[Path]:
     """
-    Given a list of file paths or glob patterns, return a sorted, unique list of valid Paths.
-    Example: ["build/*.bin", "myapp.elf", "docs/readme.md"]
+    patterns - a list of relative or absolute pathes or glob patterns. For example:
+        ["build/release/application.AppImage"] - relative pathes
+        ["/home/user/application/build/application.apk"] - absolute pathes
+        ["build/release/*.bin", "build/release/*.elf"] - patterns
+
+    Return a list of resolved files. For example:
+        [Path("build/release/application.AppImage")]
+        [Path("/home/user/application/build/application.apk")]
+        ["build/release/node.bin", "build/release/node.bin"]
     """
     all_matched = []
 
-    for pattern in file_inputs:
-        # Use glob from the current working directory
+    for pattern in patterns:
+        if os.path.isabs(pattern):
+            all_matched.append(Path(pattern))
+            continue
+
         matched = list(Path().glob(pattern))
         if not matched:
             # If the glob found nothing, check if 'pattern' is a literal file path
@@ -70,7 +81,7 @@ def resolve_files(file_inputs: List[str]) -> List[Path]:
     # Remove duplicates, sort
     unique_files = sorted(set(all_matched))
     if not unique_files:
-        raise FileNotFoundError(f"No files found for patterns: {file_inputs}")
+        raise FileNotFoundError(f"No files found for patterns: {patterns}")
 
     return unique_files
 

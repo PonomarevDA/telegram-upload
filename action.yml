@@ -30,7 +30,7 @@ runs:
 
     - name: Run deploy script
       run: |
-        python "${{ github.action_path }}/scripts/deploy_files_to_telegram.py" \
+        python "${{ github.action_path }}/scripts/deploy.py" \
           --bot-token "${{ inputs.bot_token }}" \
           --chat-id "${{ inputs.chat_id }}" \
           --files "${{ inputs.files }}" \
