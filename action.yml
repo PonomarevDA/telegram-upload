@@ -20,6 +20,10 @@ inputs:
     description: "If true, then append info about the latest git commit and tag in the git repo."
     required: false
     default: "false"
+  timeout:
+    description: "Read request timeout. By default 30 seconds."
+    required: false
+    default: "30"
 
 runs:
   using: "composite"
@@ -35,5 +39,6 @@ runs:
           --chat-id "${{ inputs.chat_id }}" \
           --files "${{ inputs.files }}" \
           --message "${{ inputs.message }}" \
-          --add-git-info "${{ inputs.add_git_info }}"
+          --add-git-info "${{ inputs.add_git_info }}" \
+          --timeout "${{ inputs.timeout }}"
       shell: bash
