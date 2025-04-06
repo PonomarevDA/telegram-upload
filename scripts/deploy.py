@@ -88,7 +88,8 @@ def resolve_files(patterns: List[str]) -> List[Path]:
 def send_media_group(telegram_bot_token: str,
                      telegram_chat_id: str,
                      files: List[Path],
-                     caption: str) -> None:
+                     caption: str,
+                     read_timeout: 30) -> None:
     """
     Send a single message to a given Telegram Chat with a given API token
     containing multiple files with a capture to the last one.
@@ -127,7 +128,7 @@ def send_media_group(telegram_bot_token: str,
         files_payload[f"file{idx + 1}"] = open(files[idx], 'rb')
 
     url = f"https://api.telegram.org/bot{telegram_bot_token}/sendMediaGroup"
-    response = requests.post(url, data=media_payload, files=files_payload, timeout=READ_TIMEOUT)
+    response = requests.post(url, data=media_payload, files=files_payload, timeout=read_timeout)
 
     for file in files_payload.values():
         file.close()
@@ -152,14 +153,24 @@ def send_media_group(telegram_bot_token: str,
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--bot-token', required=True, help='Telegram bot token')
-    parser.add_argument('--chat-id', required=True, help='Telegram chat ID')
+
+    parser.add_argument('--bot-token', required=True,
+                        help='Telegram bot token')
+
+    parser.add_argument('--chat-id', required=True,
+                        help='Telegram chat ID')
+
     parser.add_argument('--files', nargs='+', required=True,
                         help='One or more file paths or glob patterns (e.g. "build/*.bin" "my_firmware.elf")')
 
-    parser.add_argument('--message', required=True)
-    parser.add_argument('--add-git-info', required=False, default=False,
+    parser.add_argument('--message', default=" ",
+                        help="An optional message appended to the last file")
+
+    parser.add_argument('--add-git-info', default=False,
                         help='If true, append info about the latest git commit.')
+
+    parser.add_argument('--timeout', default=float(30),
+                        help='Read request timeout. By default 30 seconds.')
 
     args = parser.parse_args()
 
@@ -175,7 +186,7 @@ def main():
     if args.add_git_info.strip().lower() in ["true", "1", "yes", "on"]:
         message += get_git_info()
 
-    send_media_group(args.bot_token, args.chat_id, resolved_files, message)
+    send_media_group(args.bot_token, args.chat_id, resolved_files, message, float(args.timeout))
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
