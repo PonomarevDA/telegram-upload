@@ -5,7 +5,7 @@ A GitHub Action to upload one or more files (e.g., `.bin`, `.elf`, logs, etc.) t
 ## Usage
 
 ```yaml
-- uses: PonomarevDA/telegram-upload@v1.0.1
+- uses: PonomarevDA/telegram-upload@v1.1.0
   with:
     # Your Telegram bot token.
     # Create a Telegram bot via @BotFather,
