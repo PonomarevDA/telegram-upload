@@ -1,4 +1,4 @@
-# Telegram Upload [![Test Action](https://github.com/PonomarevDA/telegram-upload/actions/workflows/test.yml/badge.svg)](https://github.com/PonomarevDA/telegram-upload/actions/workflows/test.yml)
+# Telegram Upload [![Test Action](https://github.com/PonomarevDA/telegram-upload/actions/workflows/tests.yml/badge.svg)](https://github.com/PonomarevDA/telegram-upload/actions/workflows/tests.yml)
 
 A GitHub Action to upload one or more files (e.g., `.bin`, `.elf`, logs, etc.) to a Telegram chat via a bot token. This helps streamline the distribution of build artifacts or release files to Telegram.
 
