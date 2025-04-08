@@ -11,9 +11,7 @@ from pathlib import Path
 from typing import List
 import requests
 
-READ_TIMEOUT = 20
-
-logger = logging.getLogger("deploy_files_to_telegram.py")
+logger = logging.getLogger("deploy.py")
 
 def get_git_info() -> str:
     """
@@ -23,7 +21,6 @@ def get_git_info() -> str:
     def run_git_command(args):
         """Helper to run a git command and return stripped string output, or None on failure."""
         return subprocess.check_output(args).decode('utf-8').strip()
-
 
     try:
         commit_sha = run_git_command(['git', 'rev-parse', '--short=8', 'HEAD'])
@@ -52,15 +49,18 @@ def get_git_info() -> str:
 
 def resolve_files(patterns: List[str]) -> List[Path]:
     """
-    patterns - a list of relative or absolute pathes or glob patterns. For example:
-        ["build/release/application.AppImage"] - relative pathes
-        ["/home/user/application/build/application.apk"] - absolute pathes
+    patterns - a list of relative or absolute paths or glob patterns. For example:
+        ["build/release/application.AppImage"] - relative paths
+        ["/home/user/application/build/application.apk"] - absolute paths
         ["build/release/*.bin", "build/release/*.elf"] - patterns
 
     Return a list of resolved files. For example:
         [Path("build/release/application.AppImage")]
         [Path("/home/user/application/build/application.apk")]
         ["build/release/node.bin", "build/release/node.bin"]
+
+    Raise exceptions on failure:
+        FileNotFoundError if no files have been found
     """
     all_matched = []
 
@@ -161,7 +161,7 @@ def main():
                         help='Telegram chat ID')
 
     parser.add_argument('--files', nargs='+', required=True,
-                        help='One or more file paths or glob patterns (e.g. "build/*.bin" "my_firmware.elf")')
+                        help='File paths or glob patterns (e.g. "build/*.bin" "firmware.elf")')
 
     parser.add_argument('--message', default=" ",
                         help="An optional message appended to the last file")

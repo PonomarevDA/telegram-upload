@@ -39,3 +39,7 @@ def test_resolve_files_pattern(tmp_path : Path, monkeypatch):
 
     assert len(result) == 1
     assert result[0].resolve() == test_file.resolve()
+
+def test_resolve_files_no_files():
+    with pytest.raises(FileNotFoundError):
+        resolve_files("Not a file")
