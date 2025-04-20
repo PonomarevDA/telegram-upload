@@ -26,19 +26,5 @@ inputs:
     default: "30"
 
 runs:
-  using: "composite"
-  steps:
-    - name: Install dependencies
-      run: pip install requests
-      shell: bash
-
-    - name: Run deploy script
-      run: |
-        python "${{ github.action_path }}/scripts/deploy.py" \
-          --bot-token "${{ inputs.bot_token }}" \
-          --chat-id "${{ inputs.chat_id }}" \
-          --files "${{ inputs.files }}" \
-          --message "${{ inputs.message }}" \
-          --add-git-info "${{ inputs.add_git_info }}" \
-          --timeout "${{ inputs.timeout }}"
-      shell: bash
+  using: docker
+  image: Dockerfile

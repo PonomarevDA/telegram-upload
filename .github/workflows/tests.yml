@@ -2,8 +2,9 @@ name: Tests
 on: push
 
 jobs:
-  action:
-    runs-on: ubuntu-latest
+
+  normal:
+    runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -15,13 +16,49 @@ jobs:
           mkdir -p build/release
           echo "Test" > build/release/test.bin
 
+      - run: pwd
+      - run: ls -la
+
       - name: Run action (self-test)
         uses: ./.  # reference the action in the current repo
         with:
           bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
           files: build/release/*.bin
-          message: "Test from self-test workflow"
+          message: "Test from self-test workflow (normal)"
+          add_git_info: "true"
+
+  inside_container:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:latest
+
+    timeout-minutes: 10
+    steps:
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y git
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # to get tags
+
+      - name: Create test files
+        run: |
+          mkdir -p build/release
+          echo "Test" > build/release/test.bin
+
+      - run: pwd
+      - run: ls -la
+
+      - name: Run action (self-test)
+        uses: ./.  # reference the action in the current repo
+        with:
+          bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
+          files: build/release/*.bin
+          message: "Test from self-test workflow (inside_container)"
           add_git_info: "true"
 
   tests:
