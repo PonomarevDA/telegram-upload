@@ -5,7 +5,7 @@ A GitHub Action to upload one or more files (e.g., `.bin`, `.elf`, logs, etc.) t
 ## Usage
 
 ```yaml
-- uses: PonomarevDA/telegram-upload@v1.1.0
+- uses: PonomarevDA/telegram-upload@v1
   with:
     # Your Telegram bot token.
     # Create a Telegram bot via @BotFather,
@@ -31,9 +31,13 @@ A GitHub Action to upload one or more files (e.g., `.bin`, `.elf`, logs, etc.) t
     # Branch: main
     # Latest Tag: v1.0.0
     add_git_info: "true"
+
+    # If set, uses this URI for the Telegram API. Default: https://api.telegram.org
+    # This can be used to increase upload file size linit from 50 MB to 2 GB.
+    api_uri: "true"
 ```
 
 ## Notes & Limitations
 
 - Telegram’s sendMediaGroup only supports up to 10 files in a single request. If more than 10 files match, the action currently logs an error and exits.
-- Telegram enforces a per-file size limit (commonly up to 2GB).
+- Telegram bot can sends file with 50 MB size limit. You can increase this limit up to 2GB if you use custom API URL.
