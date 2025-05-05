@@ -25,6 +25,11 @@ inputs:
     required: false
     default: "30"
 
+  api_uri:
+    description: "If set, uses this URI for the Telegram API."
+    required: false
+    default: "https://api.telegram.org"
+
 runs:
   using: docker
   image: Dockerfile

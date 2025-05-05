@@ -16,4 +16,5 @@ python /action/scripts/deploy.py \
   --files "$INPUT_FILES" \
   --message "$INPUT_MESSAGE" \
   --add-git-info "$INPUT_ADD_GIT_INFO" \
-  --timeout "$INPUT_TIMEOUT"
+  --timeout "$INPUT_TIMEOUT" \
+  --api_uri "$INPUT_API_URI"

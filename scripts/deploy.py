@@ -89,7 +89,8 @@ def send_media_group(telegram_bot_token: str,
                      telegram_chat_id: str,
                      files: List[Path],
                      caption: str,
-                     read_timeout: 30) -> None:
+                     read_timeout: 30,
+                     telegram_uri: str) -> None:
     """
     Send a single message to a given Telegram Chat with a given API token
     containing multiple files with a capture to the last one.
@@ -127,7 +128,7 @@ def send_media_group(telegram_bot_token: str,
     for idx in range(len(files)):
         files_payload[f"file{idx + 1}"] = open(files[idx], 'rb')
 
-    url = f"https://api.telegram.org/bot{telegram_bot_token}/sendMediaGroup"
+    url = f"{telegram_uri}/bot{telegram_bot_token}/sendMediaGroup"
     response = requests.post(url, data=media_payload, files=files_payload, timeout=read_timeout)
 
     for file in files_payload.values():
@@ -171,6 +172,8 @@ def main():
 
     parser.add_argument('--timeout', default=float(30),
                         help='Read request timeout. By default 30 seconds.')
+    parser.add_argument('--api_uri', default="https://api.telegram.org",
+                        help='If set, uses this URI for the Telegram API.')
 
     args = parser.parse_args()
 
@@ -186,7 +189,7 @@ def main():
     if args.add_git_info.strip().lower() in ["true", "1", "yes", "on"]:
         message += get_git_info()
 
-    send_media_group(args.bot_token, args.chat_id, resolved_files, message, float(args.timeout))
+    send_media_group(args.bot_token, args.chat_id, resolved_files, message, float(args.timeout), args.api_uri)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
