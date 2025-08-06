@@ -8,7 +8,7 @@ import logging
 import argparse
 import subprocess
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 import requests
 
 logger = logging.getLogger("deploy.py")
@@ -96,8 +96,8 @@ def send_media_group(telegram_bot_token: str,
                      telegram_chat_id: str,
                      files: List[Path],
                      caption: str,
-                     read_timeout: 30,
-                     telegram_uri: str) -> None:
+                     read_timeout: int = 30,
+                     telegram_uri: str = "https://api.telegram.org") -> None:
     """
     Send a single message to a given Telegram Chat with a given API token
     containing multiple files with a capture to the last one.
@@ -115,7 +115,7 @@ def send_media_group(telegram_bot_token: str,
         logger.error("Too many files to send")
         sys.exit(1)
 
-    media_json_array = [None] * len(files)
+    media_json_array: List[Dict[str, str] | None] = [None] * len(files)
 
     for idx in range(0, len(files) - 1):
         media_json_array[idx] = {"type": "document", "media": f"attach://file{idx + 1}"}
