@@ -8,12 +8,12 @@ import logging
 import argparse
 import subprocess
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 import requests
 
 logger = logging.getLogger("deploy.py")
 
-def get_git_info() -> str:
+def get_git_info(num_commits: int) -> str:
     """
     Return a string summarizing the current Git commit.
     """
@@ -29,18 +29,25 @@ def get_git_info() -> str:
         committer_email = run_git_command(['git', 'log', '-1', '--format=%ae'])
         branch_name = run_git_command(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
 
+        commit_history_str = ""
+
+        if num_commits > 0:
+            commit_history = subprocess.check_output(['git', 'log', '--pretty=format:%s',
+                                            '--reverse', f'-{num_commits}']).decode('utf-8')
+            commit_history_str = "Commit history:\n".join(f'- {line}\n'
+                                                        for line in commit_history.splitlines())
         try:
             latest_tag = run_git_command(['git', 'describe', '--tags', '--abbrev=0'])
         except subprocess.CalledProcessError:
             latest_tag = "not tagged"
 
-        git_info = (
-            f"VCS commit: {commit_sha}\n"
-            f"Commit date: {commit_date}\n"
-            f"Author: {committer_name} <{committer_email}>\n"
-            f"Branch: {branch_name}\n"
-            f"Latest Tag: {latest_tag}\n"
-        )
+        git_info = f"VCS commit: {commit_sha}\n" + \
+            f"Commit date: {commit_date}\n" + \
+            f"Author: {committer_name} <{committer_email}>\n" + \
+            f"Branch: {branch_name}\n" + \
+            f"Latest Tag: {latest_tag}\n" + \
+            commit_history_str
+
     except subprocess.CalledProcessError:
         git_info = "Could not retrieve Git commit info. Are you in a Git repo?"
         logger.error(git_info)
@@ -89,8 +96,8 @@ def send_media_group(telegram_bot_token: str,
                      telegram_chat_id: str,
                      files: List[Path],
                      caption: str,
-                     read_timeout: 30,
-                     telegram_uri: str) -> None:
+                     read_timeout: int = 30,
+                     telegram_uri: str = "https://api.telegram.org") -> None:
     """
     Send a single message to a given Telegram Chat with a given API token
     containing multiple files with a capture to the last one.
@@ -108,7 +115,7 @@ def send_media_group(telegram_bot_token: str,
         logger.error("Too many files to send")
         sys.exit(1)
 
-    media_json_array = [None] * len(files)
+    media_json_array: List[Dict[str, str] | None] = [None] * len(files)
 
     for idx in range(0, len(files) - 1):
         media_json_array[idx] = {"type": "document", "media": f"attach://file{idx + 1}"}
@@ -174,6 +181,8 @@ def main():
                         help='Read request timeout. By default 30 seconds.')
     parser.add_argument('--api_uri', default="https://api.telegram.org",
                         help='If set, uses this URI for the Telegram API.')
+    parser.add_argument('--commit_history', default=3, type=int,
+                        help='Number of commits to include in the commit history')
 
     args = parser.parse_args()
 
@@ -187,7 +196,7 @@ def main():
     # Build final message
     message = f"{args.message}\n"
     if args.add_git_info.strip().lower() in ["true", "1", "yes", "on"]:
-        message += get_git_info()
+        message += get_git_info(args.commit_history)
 
     send_media_group(args.bot_token, args.chat_id, resolved_files, message, float(args.timeout), args.api_uri)
 

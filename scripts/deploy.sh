@@ -12,6 +12,8 @@ docker run --rm \
   -e INPUT_MESSAGE="Hello from local test" \
   -e INPUT_ADD_GIT_INFO=true \
   -e INPUT_TIMEOUT=30 \
+  -e INPUT_API_URI=https://api.telegram.org \
+  -e INPUT_COMMIT_HISTORY=3 \
   -v "$(pwd)":/github/workspace \
   --network=host \
   telegram-upload-action

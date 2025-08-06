@@ -30,11 +30,17 @@ A GitHub Action to upload one or more files (e.g., `.bin`, `.elf`, logs, etc.) t
     # Author: author <email>
     # Branch: main
     # Latest Tag: v1.0.0
+    # Commit history:
+    # - Commit message 1
+    # - Commit message 2
     add_git_info: "true"
 
     # If set, uses this URI for the Telegram API. Default: https://api.telegram.org
     # This can be used to increase upload file size linit from 50 MB to 2 GB.
     api_uri: "true"
+
+    # Number of commits to include in the commit history. Default: 3
+    commit_history: 3
 ```
 
 ## Notes & Limitations

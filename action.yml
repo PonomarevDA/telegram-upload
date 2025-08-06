@@ -30,6 +30,11 @@ inputs:
     required: false
     default: "https://api.telegram.org"
 
+  commit_history:
+    description: "Number of commits to include in the commit history"
+    required: false
+    default: "3"
+
 runs:
   using: docker
   image: Dockerfile
