@@ -34,8 +34,9 @@ def get_git_info(num_commits: int) -> str:
         if num_commits > 0:
             commit_history = subprocess.check_output(['git', 'log', '--pretty=format:%s',
                                             '--reverse', f'-{num_commits}']).decode('utf-8')
-            commit_history_str = "Commit history:\n".join(f'- {line}\n'
+            commit_history_str = "".join(f'- {line}\n'
                                                         for line in commit_history.splitlines())
+            commit_history_str = "Commit history:\n" + commit_history_str
         try:
             latest_tag = run_git_command(['git', 'describe', '--tags', '--abbrev=0'])
         except subprocess.CalledProcessError:
