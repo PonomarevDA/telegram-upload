@@ -18,4 +18,5 @@ python /action/scripts/deploy.py \
   --add-git-info "$INPUT_ADD_GIT_INFO" \
   --timeout "$INPUT_TIMEOUT" \
   --api_uri "$INPUT_API_URI" \
-  --commit_history "$INPUT_COMMIT_HISTORY"
+  --commit_history "$INPUT_COMMIT_HISTORY" \
+  --verbose "$INPUT_VERBOSE"

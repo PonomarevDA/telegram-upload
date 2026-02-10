@@ -2,6 +2,7 @@
 """
 Send a group of files to a Telegram chat using a bot token.
 """
+import json
 import os
 import sys
 import logging
@@ -72,6 +73,8 @@ def resolve_files(patterns: List[str]) -> List[Path]:
     """
     all_matched = []
 
+    logger.debug(f"Resolving patterns: {' '.join(patterns)}")
+
     for pattern in patterns:
         if os.path.isabs(pattern):
             all_matched.append(Path(pattern))
@@ -90,6 +93,8 @@ def resolve_files(patterns: List[str]) -> List[Path]:
     unique_files = sorted(set(all_matched))
     if not unique_files:
         raise FileNotFoundError(f"No files found for patterns: {patterns}")
+
+    logger.debug(f"Resolved files: {', '.join(str(f) for f in unique_files)}")
 
     return unique_files
 
@@ -131,10 +136,12 @@ def send_media_group(telegram_bot_token: str,
         'chat_id': telegram_chat_id,
         'media': str(media_json_array).replace("'", '"')
     }
+    logger.debug(f"Sending media payload: {json.dumps(media_payload)}")
 
     files_payload = {}
     for idx in range(len(files)):
         files_payload[f"file{idx + 1}"] = open(files[idx], 'rb')
+    logger.debug(f"Sending files payload: {', '.join(files_payload.keys())}")
 
     url = f"{telegram_uri}/bot{telegram_bot_token}/sendMediaGroup"
     response = requests.post(url, data=media_payload, files=files_payload, timeout=read_timeout)
@@ -161,6 +168,18 @@ def send_media_group(telegram_bot_token: str,
     logger.info("Files have been send.")
 
 def main():
+    logging.basicConfig(level=logging.INFO)
+
+    def str2bool(v):
+        if isinstance(v, bool):
+            return v
+        if v.lower() in ('yes', 'true', 't', 'y', '1'):
+            return True
+        elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+            return False
+        else:
+            raise argparse.ArgumentTypeError('Boolean value expected.')
+
     parser = argparse.ArgumentParser(description=__doc__)
 
     parser.add_argument('--bot-token', required=True,
@@ -185,7 +204,15 @@ def main():
     parser.add_argument('--commit_history', default=3, type=int,
                         help='Number of commits to include in the commit history')
 
+    parser.add_argument('--verbose', type=str2bool, required=False, default=False)
+
+
     args = parser.parse_args()
+
+    logger.setLevel(logging.INFO if not args.verbose else logging.DEBUG)
+
+    logger.debug(f'In directory: {os.getcwd()}')
+    logger.debug(f'Content: {os.listdir(os.getcwd())}')
 
     # Resolve the user-provided file inputs
     try:
@@ -202,7 +229,4 @@ def main():
     send_media_group(args.bot_token, args.chat_id, resolved_files, message, float(args.timeout), args.api_uri)
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    logger.setLevel(logging.INFO)
-
     main()
