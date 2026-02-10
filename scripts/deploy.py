@@ -54,7 +54,7 @@ def get_git_info(num_commits: int) -> str:
         git_info = "Could not retrieve Git commit info. Are you in a Git repo?"
         logger.error(git_info)
 
-    return git_info
+    return git_info.replace('"', "'")  # Escape quotes for JSON
 
 def resolve_files(patterns: List[str]) -> List[Path]:
     """
