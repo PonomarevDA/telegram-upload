@@ -226,6 +226,9 @@ def main():
     if args.add_git_info.strip().lower() in ["true", "1", "yes", "on"]:
         message += get_git_info(args.commit_history)
 
+    message.replace('"', "'")  # Escape quotes for JSON
+    logger.debug(f"Final message: {message}")
+
     send_media_group(args.bot_token, args.chat_id, resolved_files, message, float(args.timeout), args.api_uri)
 
 if __name__ == '__main__':
