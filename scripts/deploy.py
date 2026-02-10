@@ -134,7 +134,7 @@ def send_media_group(telegram_bot_token: str,
 
     media_payload = {
         'chat_id': telegram_chat_id,
-        'media': str(media_json_array).replace("'", '"')
+        'media': json.dumps(media_json_array)
     }
     logger.debug(f"Sending media payload: {json.dumps(media_payload)}")
 
