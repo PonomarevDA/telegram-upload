@@ -56,7 +56,7 @@ def get_git_info(num_commits: int) -> str:
 
     return git_info.replace('"', "'")  # Escape quotes for JSON
 
-def resolve_files(patterns: List[str]) -> List[Path]:
+def resolve_files(patterns: List[str|Path]) -> List[Path]:
     """
     patterns - a list of relative or absolute paths or glob patterns. For example:
         ["build/release/application.AppImage"] - relative paths
@@ -73,7 +73,7 @@ def resolve_files(patterns: List[str]) -> List[Path]:
     """
     all_matched = []
 
-    logger.debug(f"Resolving patterns: {' '.join(patterns)}")
+    logger.debug(f"Resolving patterns: {' '.join(map(str, patterns))}")
 
     for pattern in patterns:
         if os.path.isabs(pattern):
@@ -94,7 +94,7 @@ def resolve_files(patterns: List[str]) -> List[Path]:
     if not unique_files:
         raise FileNotFoundError(f"No files found for patterns: {patterns}")
 
-    logger.debug(f"Resolved files: {', '.join(str(f) for f in unique_files)}")
+    logger.debug(f"Resolved files: {', '.join(map(str, unique_files))}")
 
     return unique_files
 
