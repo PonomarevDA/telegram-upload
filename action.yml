@@ -30,6 +30,11 @@ inputs:
     required: false
     default: "https://api.telegram.org"
 
+  verbose:
+    description: "If set, prints debug information about the upload process."
+    required: false
+    default: "false"
+
   commit_history:
     description: "Number of commits to include in the commit history"
     required: false
