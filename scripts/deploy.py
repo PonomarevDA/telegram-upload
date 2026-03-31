@@ -33,9 +33,9 @@ class BuildTypeEnum(str, Enum):
     TAG = "tag"
 
 build_type_map = {
-    BuildTypeEnum.DEV: "🏷 TAG BUILD",
+    BuildTypeEnum.TAG: "🏷 TAG BUILD",
     BuildTypeEnum.MAIN: "✅ MAIN BUILD",
-    BuildTypeEnum.TAG: "🧪 DEV BUILD",
+    BuildTypeEnum.DEV: "🧪 DEV BUILD",
 }
 
 def get_git_info(num_commits: int) -> Optional[GitInfo]:
