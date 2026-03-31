@@ -13,9 +13,16 @@ A GitHub Action to upload one or more files (e.g., `.bin`, `.elf`, logs, etc.) t
     # Add TELEGRAM_BOT_TOKEN with the value of the token.
     bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
-    # The ID of the Telegram chat/channel/group where files are sent.
+    # The JSON of the following format:
+    # {
+    #   "channel_id": <channel_id>, // this is a public channel for main/tag builds
+    #   "your_github_username": <user_id> // this is your personal chat for dev builds
+    #   "your_colleague_github_username": <user_id> // this is your colleague personal chat for dev builds
+    # }
     # Use @get_id_bot, https://api.telegram.org/bot<token>/getUpdates to find it.
-    chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
+    target: ${{ secrets.TARGET }}
+    
+    build_type: "dev" # one of the following: "dev", "tag", "main". Default: "dev"
 
     # One or more file paths or glob patterns (e.g. "build/*.bin" "my_firmware.elf")"
     files: build/release/*.bin
