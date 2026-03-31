@@ -8,13 +8,37 @@ import sys
 import logging
 import argparse
 import subprocess
+from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 import requests
 
 logger = logging.getLogger("deploy.py")
 
-def get_git_info(num_commits: int) -> str:
+
+@dataclass
+class GitInfo:
+    commit_sha: str
+    commit_date: str
+    committer_name: str
+    committer_email: str
+    branch_name: str
+    latest_tag: str
+    commit_history: list[str]
+
+class BuildTypeEnum(str, Enum):
+    DEV = "dev"
+    MAIN = "main"
+    TAG = "tag"
+
+build_type_map = {
+    BuildTypeEnum.DEV: "🏷 TAG BUILD",
+    BuildTypeEnum.MAIN: "✅ MAIN BUILD",
+    BuildTypeEnum.TAG: "🧪 DEV BUILD",
+}
+
+def get_git_info(num_commits: int) -> Optional[GitInfo]:
     """
     Return a string summarizing the current Git commit.
     """
@@ -30,29 +54,31 @@ def get_git_info(num_commits: int) -> str:
         committer_email = run_git_command(['git', 'log', '-1', '--format=%ae'])
         branch_name = run_git_command(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
 
-        commit_history_str = ""
-
         if num_commits > 0:
             commit_history = subprocess.check_output(['git', 'log', '--pretty=format:%s',
                                             '--reverse', f'-{num_commits}']).decode('utf-8')
-            commit_history_str = "".join(f'- {line}\n'
-                                                        for line in commit_history.splitlines())
-            commit_history_str = "Commit history:\n" + commit_history_str
+            commit_history = commit_history.splitlines()
+        else:
+            commit_history = []
         try:
             latest_tag = run_git_command(['git', 'describe', '--tags', '--abbrev=0'])
         except subprocess.CalledProcessError:
             latest_tag = "not tagged"
 
-        git_info = f"VCS commit: {commit_sha}\n" + \
-            f"Commit date: {commit_date}\n" + \
-            f"Author: {committer_name} <{committer_email}>\n" + \
-            f"Branch: {branch_name}\n" + \
-            f"Latest Tag: {latest_tag}\n" + \
-            commit_history_str
+        return GitInfo(
+            commit_sha=commit_sha,
+            commit_date=commit_date,
+            committer_name=committer_name,
+            committer_email=committer_email,
+            branch_name=branch_name,
+            latest_tag=latest_tag,
+            commit_history=commit_history
+        )
 
-    except subprocess.CalledProcessError:
-        git_info = "Could not retrieve Git commit info. Are you in a Git repo?"
-        logger.error(git_info)
+    except subprocess.CalledProcessError as e:
+        logger.error(e)
+        "Could not retrieve Git commit info. Are you in a Git repo?"
+        return None
 
     return git_info.replace('"', "'")  # Escape quotes for JSON
 
@@ -102,7 +128,7 @@ def send_media_group(telegram_bot_token: str,
                      telegram_chat_id: str,
                      files: List[Path],
                      caption: str,
-                     read_timeout: int = 30,
+                     read_timeout: float = 30,
                      telegram_uri: str = "https://api.telegram.org") -> None:
     """
     Send a single message to a given Telegram Chat with a given API token
@@ -185,8 +211,13 @@ def main():
     parser.add_argument('--bot-token', required=True,
                         help='Telegram bot token')
 
-    parser.add_argument('--chat-id', required=True,
-                        help='Telegram chat ID')
+    parser.add_argument('--target', required=True,
+                        help='Target JSON to send to')
+
+    parser.add_argument('--build-type', default=BuildTypeEnum.DEV,
+                        help='Which build type is this (dev, tag, main)',
+                        choices=[x.value for x in BuildTypeEnum],
+                        type=BuildTypeEnum)
 
     parser.add_argument('--files', nargs='+', required=True,
                         help='File paths or glob patterns (e.g. "build/*.bin" "firmware.elf")')
@@ -221,15 +252,32 @@ def main():
         logger.error(str(e))
         sys.exit(1)
 
+    target_object = json.loads(args.target)
+
     # Build final message
     message = f"{args.message}\n"
     if args.add_git_info.strip().lower() in ["true", "1", "yes", "on"]:
-        message += get_git_info(args.commit_history)
+        info = get_git_info(args.commit_history)
+        if info is None:
+            message += "Could not retrieve Git commit info. Are you in a Git repo?\n"
+            target = target_object['channel_id']
+        else:
+            build_type = build_type_map[args.build_type]
+            message += (f"{build_type} • {info.branch_name}\n"
+                        f"Commit: {info.commit_sha} • {info.commit_date} • {info.committer_name}\n"
+                        f"Base tag: {info.latest_tag}\n\n"
+                        f"Recent changes:\n"
+                        f"{chr(10).join(['- '+x for x in info.commit_history])}")
 
-    message.replace('"', "'")  # Escape quotes for JSON
+            if build_type in [BuildTypeEnum.MAIN, BuildTypeEnum.TAG]:
+                target = target_object['channel_id']
+            else:
+                target = target_object.get(info.committer_name, target_object['channel_id'])
+    else:
+        target = target_object['channel_id']
     logger.debug(f"Final message: {message}")
 
-    send_media_group(args.bot_token, args.chat_id, resolved_files, message, float(args.timeout), args.api_uri)
+    send_media_group(args.bot_token, target, resolved_files, message, float(args.timeout), args.api_uri)
 
 if __name__ == '__main__':
     main()

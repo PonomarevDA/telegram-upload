@@ -12,7 +12,8 @@ git config --global --add safe.directory /github/workspace
 
 python /action/scripts/deploy.py \
   --bot-token "$INPUT_BOT_TOKEN" \
-  --chat-id "$INPUT_CHAT_ID" \
+  --chat-id "$INPUT_TARGET" \
+  --build-type "$INPUT_BUILD_TYPE" \
   --files "$INPUT_FILES" \
   --message "$INPUT_MESSAGE" \
   --add-git-info "$INPUT_ADD_GIT_INFO" \
