@@ -269,7 +269,7 @@ def main():
                         f"Recent changes:\n"
                         f"{chr(10).join(['- '+x for x in info.commit_history])}")
 
-            if build_type in [BuildTypeEnum.MAIN, BuildTypeEnum.TAG]:
+            if args.build_type in [BuildTypeEnum.MAIN, BuildTypeEnum.TAG]:
                 target = target_object['channel_id']
             else:
                 target = target_object.get(info.committer_name, target_object['channel_id'])
