@@ -38,6 +38,26 @@ build_type_map = {
     BuildTypeEnum.DEV: "🧪 DEV BUILD",
 }
 
+def resolve_target(target: Optional[str],
+                   chat_id: Optional[str],
+                   build_type: BuildTypeEnum,
+                   git_info: Optional[GitInfo]) -> str:
+    """
+    Select a Telegram target. Prefer the new target JSON when provided, but keep
+    --chat-id as a legacy fallback for existing users.
+    """
+    if not target:
+        if chat_id:
+            return chat_id
+        raise ValueError("Either --target or --chat-id must be provided")
+
+    target_object = json.loads(target)
+
+    if git_info is None or build_type in [BuildTypeEnum.MAIN, BuildTypeEnum.TAG]:
+        return target_object['channel_id']
+
+    return target_object.get(git_info.committer_name, target_object['channel_id'])
+
 def get_git_info(num_commits: int) -> Optional[GitInfo]:
     """
     Return a string summarizing the current Git commit.
@@ -211,7 +231,10 @@ def main():
     parser.add_argument('--bot-token', required=True,
                         help='Telegram bot token')
 
-    parser.add_argument('--target', required=True,
+    parser.add_argument('--chat-id', required=False,
+                        help='Telegram chat ID')
+
+    parser.add_argument('--target', required=False,
                         help='Target JSON to send to')
 
     parser.add_argument('--build-type', default=BuildTypeEnum.DEV,
@@ -252,15 +275,13 @@ def main():
         logger.error(str(e))
         sys.exit(1)
 
-    target_object = json.loads(args.target)
-
     # Build final message
     message = f"{args.message}\n"
+    info = None
     if args.add_git_info.strip().lower() in ["true", "1", "yes", "on"]:
         info = get_git_info(args.commit_history)
         if info is None:
             message += "Could not retrieve Git commit info. Are you in a Git repo?\n"
-            target = target_object['channel_id']
         else:
             build_type = build_type_map[args.build_type]
             message += (f"{build_type} • {info.branch_name}\n"
@@ -268,14 +289,13 @@ def main():
                         f"Base tag: {info.latest_tag}\n\n"
                         f"Recent changes:\n"
                         f"{chr(10).join(['- '+x for x in info.commit_history])}")
-
-            if args.build_type in [BuildTypeEnum.MAIN, BuildTypeEnum.TAG]:
-                target = target_object['channel_id']
-            else:
-                target = target_object.get(info.committer_name, target_object['channel_id'])
-    else:
-        target = target_object['channel_id']
     logger.debug(f"Final message: {message}")
+
+    try:
+        target = resolve_target(args.target, args.chat_id, args.build_type, info)
+    except (json.JSONDecodeError, KeyError, ValueError) as e:
+        logger.error(str(e))
+        sys.exit(1)
 
     send_media_group(args.bot_token, target, resolved_files, message, float(args.timeout), args.api_uri)
 

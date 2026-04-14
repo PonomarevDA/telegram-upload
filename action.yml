@@ -7,10 +7,14 @@ inputs:
   bot_token:
     description: "Telegram Bot Token"
     required: true
+  chat_id:
+    description: "Telegram Chat ID. Legacy input; use target for build-type based routing."
+    required: false
+
   target:
     description: "A json object with the following fields: 'channel_id': <channel_id>, 'dev1_name': <dev1_chat_id> ... 'devN_name': <devN_chat_id>. 
                   The channel is for stable builds and dev name to chat_id map github usernames to their Telegram chat ids."
-    required: true
+    required: false
 
   build_type:
     description: "Build type (e.g. tag, main, dev)"
