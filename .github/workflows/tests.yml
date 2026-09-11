@@ -6,7 +6,9 @@ on:
 jobs:
 
   normal:
-    runs-on: ubuntu-22.04
+    runs-on: 
+      group: Default
+      labels: [ self-hosted, Linux ]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -30,6 +32,18 @@ jobs:
           files: build/release/*.bin
           message: "Test from self-test workflow (normal)"
           add_git_info: "true"
+
+      - name: Run action (self-test with a hosted api)
+        uses: ./.  # reference the action in the current repo
+        with:
+          bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          target: ${{ secrets.TARGET }}
+          api_uri: "http://10.42.0.126:8081" 
+          build_type: 'dev'
+          files: build/release/*.bin
+          message: "Test from self-test workflow (normal)"
+          add_git_info: "true"
+          
 
   inside_container:
     runs-on: ubuntu-latest
