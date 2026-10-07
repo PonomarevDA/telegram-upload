@@ -14,6 +14,7 @@ python /action/scripts/deploy.py \
   --bot-token "$INPUT_BOT_TOKEN" \
   --chat-id "$INPUT_CHAT_ID" \
   --target "$INPUT_TARGET" \
+  --topic-id "$INPUT_TOPIC_ID" \
   --build-type "$INPUT_BUILD_TYPE" \
   --files "$INPUT_FILES" \
   --message "$INPUT_MESSAGE" \

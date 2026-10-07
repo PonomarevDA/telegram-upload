@@ -58,6 +58,22 @@ def resolve_target(target: Optional[str],
 
     return target_object.get(git_info.committer_name, target_object['channel_id'])
 
+def resolve_topic(chat: str, target: Optional[str], topic_id: Optional[str]) -> Optional[str]:
+    """
+    A forum topic belongs to one group, so it applies to --chat-id or the target's
+    channel_id only, never to a developer's own chat picked from the target.
+    """
+    if not topic_id:
+        return None
+
+    if not topic_id.isdigit():
+        raise ValueError(f"--topic-id must be a number, got '{topic_id}'")
+
+    if target and chat != json.loads(target)['channel_id']:
+        return None
+
+    return topic_id
+
 def get_git_info(num_commits: int) -> Optional[GitInfo]:
     """
     Return a string summarizing the current Git commit.
@@ -149,10 +165,12 @@ def send_media_group(telegram_bot_token: str,
                      files: List[Path],
                      caption: str,
                      read_timeout: float = 30,
-                     telegram_uri: str = "https://api.telegram.org") -> None:
+                     telegram_uri: str = "https://api.telegram.org",
+                     topic_id: Optional[str] = None) -> None:
     """
     Send a single message to a given Telegram Chat with a given API token
     containing multiple files with a capture to the last one.
+    With topic_id, the message goes to that topic of a group with topics.
     """
     assert isinstance(telegram_bot_token, str)
     assert isinstance(telegram_chat_id, str)
@@ -182,6 +200,8 @@ def send_media_group(telegram_bot_token: str,
         'chat_id': telegram_chat_id,
         'media': json.dumps(media_json_array)
     }
+    if topic_id:
+        media_payload['message_thread_id'] = topic_id
     logger.debug(f"Sending media payload: {json.dumps(media_payload)}")
 
     files_payload = {}
@@ -236,6 +256,9 @@ def main():
 
     parser.add_argument('--target', required=False,
                         help='Target JSON to send to')
+
+    parser.add_argument('--topic-id', required=False,
+                        help='Topic (message thread) ID in the group of --chat-id or channel_id')
 
     parser.add_argument('--build-type', default=BuildTypeEnum.DEV,
                         help='Which build type is this (dev, tag, main)',
@@ -293,11 +316,12 @@ def main():
 
     try:
         target = resolve_target(args.target, args.chat_id, args.build_type, info)
+        topic = resolve_topic(target, args.target, args.topic_id)
     except (json.JSONDecodeError, KeyError, ValueError) as e:
         logger.error(str(e))
         sys.exit(1)
 
-    send_media_group(args.bot_token, target, resolved_files, message, float(args.timeout), args.api_uri)
+    send_media_group(args.bot_token, target, resolved_files, message, float(args.timeout), args.api_uri, topic)
 
 if __name__ == '__main__':
     main()

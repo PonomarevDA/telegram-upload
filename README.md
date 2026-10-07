@@ -26,6 +26,11 @@ A GitHub Action to upload one or more files (e.g., `.bin`, `.elf`, logs, etc.) t
     # }
     # Use @get_id_bot, https://api.telegram.org/bot<token>/getUpdates to find it.
     # target: ${{ secrets.TARGET }}
+
+    # Optional: the topic of a group with topics to send to.
+    # A message link t.me/c/1234567890/2/5 is message 5 in topic 2 of the chat -1001234567890.
+    # It applies to chat_id or the target's channel_id, not to a developer's own chat.
+    # topic_id: 2
     
     build_type: "dev" # one of the following: "dev", "tag", "main". Default: "dev"
 

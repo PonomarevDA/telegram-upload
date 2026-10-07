@@ -16,6 +16,12 @@ inputs:
                   The channel is for stable builds and dev name to chat_id map github usernames to their Telegram chat ids."
     required: false
 
+  topic_id:
+    description: "Topic (message thread) ID in a group with topics: 2 in the link t.me/c/<chat>/2/<message>.
+                  It applies to chat_id or the target's channel_id, not to a developer's own chat."
+    required: false
+    default: ""
+
   build_type:
     description: "Build type (e.g. tag, main, dev)"
     default: "dev"
