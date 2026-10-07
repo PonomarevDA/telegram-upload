@@ -6,9 +6,7 @@ on:
 jobs:
 
   normal:
-    runs-on: 
-      group: Default
-      labels: [ self-hosted, Linux ]
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -33,30 +31,42 @@ jobs:
           message: "Test from self-test workflow (normal)"
           add_git_info: "true"
 
+  # A self-hosted Bot API server is reachable from its own network only, so this job runs on a
+  # self-hosted runner there and only when the repository variable TELEGRAM_API_URI names it
+  # (e.g. http://10.42.0.126:8081). Without the variable it is skipped instead of waiting for a runner.
+  hosted_api:
+    if: vars.TELEGRAM_API_URI != ''
+    runs-on: [ self-hosted, Linux ]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # to get tags
+
+      - name: Create test files
+        run: |
+          mkdir -p build/release
+          echo "Test" > build/release/test.bin
+
       - name: Run action (self-test with a hosted api)
         uses: ./.  # reference the action in the current repo
         with:
           bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           target: ${{ secrets.TARGET }}
-          api_uri: "http://10.42.0.126:8081" 
+          api_uri: ${{ vars.TELEGRAM_API_URI }}
           build_type: 'dev'
           files: build/release/*.bin
-          message: "Test from self-test workflow (normal)"
+          message: "Test from self-test workflow (hosted_api)"
           add_git_info: "true"
-          
 
   inside_container:
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:latest
+      # Ubuntu with git already in it: installing it took apt-get past the time limit
+      image: buildpack-deps:noble-scm
 
     timeout-minutes: 10
     steps:
-      - name: Install dependencies
-        run: |
-          apt-get update
-          apt-get install -y git
-
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # to get tags
